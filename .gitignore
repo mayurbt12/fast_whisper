@@ -1,3 +1,7 @@
 .venv/
 note.md
 uploads/
+__pycache__/
+large_dummy_audio.mp3
+test_short.mp3
+tests/sample/

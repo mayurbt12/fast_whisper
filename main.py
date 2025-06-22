@@ -1,7 +1,7 @@
 import os
 import uuid
 import shutil
-from typing import List
+from typing import List, Optional
 
 from fastapi import FastAPI, UploadFile, File, HTTPException, status
 from pydantic import BaseModel
@@ -10,7 +10,9 @@ from pydub import AudioSegment
 
 # Configuration
 UPLOAD_DIR = "uploads"
-ALLOWED_EXTENSIONS = {"mp4", "wav", "mp3"}
+ALLOWED_EXTENSIONS = {"wav", "mp3"}
+MAX_FILE_SIZE_MB = 20
+MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024  # Convert MB to bytes
 MODEL_SIZE = "base"  # You can choose tiny, base, small, medium, large-v2, large-v3
 
 # Ensure upload directory exists
@@ -29,7 +31,7 @@ class TranscriptionResponse(BaseModel):
 
 # Singleton for Whisper model
 class WhisperSingleton:
-    _instance: WhisperModel = None
+    _instance: Optional[WhisperModel] = None
 
     def __new__(cls) -> WhisperModel:
         if cls._instance is None:
@@ -94,6 +96,17 @@ async def transcribe_audio_video(file: UploadFile = File(...)):
             detail=f"Invalid file type. Allowed types are: {', '.join(ALLOWED_EXTENSIONS)}"
         )
 
+    # Check file size
+    file.file.seek(0, os.SEEK_END)
+    file_size = file.file.tell()
+    file.file.seek(0)  # Reset file pointer to the beginning
+
+    if file_size > MAX_FILE_SIZE_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"File size exceeds the maximum limit of {MAX_FILE_SIZE_MB} MB."
+        )
+
     file_extension = file.filename.rsplit(".", 1)[1].lower()
     unique_filename = f"{uuid.uuid4()}.{file_extension}"
     file_path = os.path.join(UPLOAD_DIR, unique_filename)
@@ -104,20 +117,7 @@ async def transcribe_audio_video(file: UploadFile = File(...)):
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        # Convert video to audio if necessary
-        if file_extension in {"mp4"}:
-            audio_file_path = os.path.join(UPLOAD_DIR, f"{uuid.uuid4()}.wav")
-            try:
-                audio = AudioSegment.from_file(file_path)
-                audio.export(audio_file_path, format="wav")
-                transcription_source = audio_file_path
-            except Exception as e:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f"Could not extract audio from video file: {e}"
-                )
-        else:
-            transcription_source = file_path
+        transcription_source = file_path
 
         # Transcribe using Faster-Whisper
         model_instance = WhisperSingleton()

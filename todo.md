@@ -1,11 +1,14 @@
-## 🧠 Prompt Title: Update README with Mac Installation Instructions
-📅 Date: 2025-06-22 18:07
+## 🧠 Prompt Title: Export Audio from Video
+📅 Date: 2025-06-22 18:25
 
 ### 🔍 Improved Business Logic:
-- Add a section to `readme.md` detailing how to run the application on a Mac.
-- Include steps for cloning the repository, installing Python dependencies, installing `ffmpeg` (for video processing), and running the FastAPI application using `uvicorn`.
+The task is to extract the audio track from the video file 'tests/sample/zYGDpG-pTho/video.mp4' and save it as an audio file.
 
 ---
 
+### ✅ Checklist:
+- [x] Use `ffmpeg` to extract audio from `tests/sample/zYGDpG-pTho/video.mp4` to `tests/sample/zYGDpG-pTho/audio.mp3`.
+- [x] Document the completion in `todo.md`.
 
-⚠️ Do not write implementation code at this stage.
+## Review
+- The audio was successfully extracted from `tests/sample/zYGDpG-pTho/video.mp4` and saved as `tests/sample/zYGDpG-pTho/audio.mp3` using `ffmpeg`.

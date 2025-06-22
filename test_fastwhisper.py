@@ -13,8 +13,7 @@ from pathlib import Path
 
 # Configuration
 FASTWHISPER_URL = "http://localhost:1990"
-SAMPLE_VIDEO_PATH = "/home/mayurbt/PycharmProjects/vido_ht_m/FastWhisper/tests/sample/zYGDpG-pTho/video.mp4"
-SHORT_VIDEO_PATH = "/home/mayurbt/PycharmProjects/vido_ht_m/FastWhisper/test_short.mp4"
+SAMPLE_AUDIO_PATH = "/home/mayurbt/PycharmProjects/vido_ht_m/FastWhisper/test_short.mp3" # Using a dummy mp3 for testing
 
 def test_health_check():
     """Test if FastWhisper API is running and healthy."""
@@ -35,20 +34,20 @@ def test_health_check():
 
 def test_transcription():
     """Test video transcription with the sample file."""
-    print(f"\nTesting transcription with: {SAMPLE_VIDEO_PATH}")
+    print(f"\nTesting transcription with: {SAMPLE_AUDIO_PATH}")
     
-    # Check if sample video exists
-    if not os.path.exists(SAMPLE_VIDEO_PATH):
-        print(f"✗ Sample video not found at: {SAMPLE_VIDEO_PATH}")
+    # Check if sample audio exists
+    if not os.path.exists(SAMPLE_AUDIO_PATH):
+        print(f"✗ Sample audio not found at: {SAMPLE_AUDIO_PATH}")
         return False
     
-    print(f"✓ Sample video found ({os.path.getsize(SAMPLE_VIDEO_PATH)} bytes)")
+    print(f"✓ Sample audio found ({os.path.getsize(SAMPLE_AUDIO_PATH)} bytes)")
     
     try:
         # Prepare file for upload
-        with open(SAMPLE_VIDEO_PATH, 'rb') as video_file:
+        with open(SAMPLE_AUDIO_PATH, 'rb') as audio_file:
             files = {
-                'file': ('video.mp4', video_file, 'video/mp4')
+                'file': ('test_short.mp3', audio_file, 'audio/mpeg')
             }
             
             print("Sending transcription request...")
@@ -114,6 +113,47 @@ def check_api_docs():
         print(f"✗ Could not access API docs: {e}")
         return False
 
+def test_file_size_limit():
+    """Test if uploading a file larger than MAX_FILE_SIZE_MB returns HTTP 413."""
+    print(f"\nTesting file size limit with large_dummy_audio.mp3")
+    
+    large_file_path = "large_dummy_audio.mp3"
+    if not os.path.exists(large_file_path):
+        print(f"✗ Large dummy audio file not found at: {large_file_path}")
+        print("Please create it using: dd if=/dev/zero of=large_dummy_audio.mp3 bs=1M count=21")
+        return False
+
+    print(f"✓ Large dummy audio file found ({os.path.getsize(large_file_path)} bytes)")
+
+    try:
+        with open(large_file_path, 'rb') as dummy_file:
+            files = {
+                'file': ('large_dummy_audio.mp3', dummy_file, 'audio/mpeg')
+            }
+            
+            print("Sending large file transcription request...")
+            response = requests.post(
+                f"{FASTWHISPER_URL}/transcribe/",
+                files=files,
+                timeout=60
+            )
+
+            if response.status_code == 413:
+                print(f"✓ File size limit test passed: Received expected HTTP 413 status code.")
+                print(f"Response: {response.text}")
+                return True
+            else:
+                print(f"✗ File size limit test failed: Expected HTTP 413, got {response.status_code}")
+                print(f"Response: {response.text}")
+                return False
+
+    except requests.exceptions.RequestException as e:
+        print(f"✗ File size limit test failed: {e}")
+        return False
+    except Exception as e:
+        print(f"✗ Unexpected error during file size limit test: {e}")
+        return False
+
 def main():
     """Run all tests."""
     print("=" * 60)
@@ -121,7 +161,7 @@ def main():
     print("=" * 60)
     
     tests_passed = 0
-    total_tests = 3
+    total_tests = 4
     
     # Test 1: Health check
     if test_health_check():
@@ -133,6 +173,10 @@ def main():
     
     # Test 3: Transcription
     if test_transcription():
+        tests_passed += 1
+
+    # Test 4: File size limit
+    if test_file_size_limit():
         tests_passed += 1
     
     print("\n" + "=" * 60)

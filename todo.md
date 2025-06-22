@@ -1,14 +1,12 @@
-## 🧠 Prompt Title: Export Audio from Video
-📅 Date: 2025-06-22 18:25
+## 🧠 Prompt Title: Remove GPU Code from main.py
+📅 Date: 2025-06-22 18:35
 
 ### 🔍 Improved Business Logic:
-The task is to extract the audio track from the video file 'tests/sample/zYGDpG-pTho/video.mp4' and save it as an audio file.
+- Removed all code related to GPU detection and usage in `main.py`.
+- Ensured the `WhisperModel` is always initialized with `device="cpu"` and `compute_type="int8"`.
 
 ---
 
-### ✅ Checklist:
-- [x] Use `ffmpeg` to extract audio from `tests/sample/zYGDpG-pTho/video.mp4` to `tests/sample/zYGDpG-pTho/audio.mp3`.
-- [x] Document the completion in `todo.md`.
-
 ## Review
-- The audio was successfully extracted from `tests/sample/zYGDpG-pTho/video.mp4` and saved as `tests/sample/zYGDpG-pTho/audio.mp3` using `ffmpeg`.
+- Removed GPU-related code from `main.py` by simplifying the `WhisperSingleton` class to always use `device="cpu"` and `compute_type="int8"`.
+- This change ensures that the application will run solely on the CPU, eliminating any dependencies on GPU hardware or libraries like `torch`.

@@ -36,21 +36,6 @@ class WhisperSingleton:
     def __new__(cls) -> WhisperModel:
         if cls._instance is None:
             print(f"Loading Whisper model: {MODEL_SIZE}...")
-            try:
-                import torch
-                if torch.cuda.is_available():
-                    device = "cuda"
-                    compute_type = "float16"
-                elif torch.backends.mps.is_available():
-                    device = "mps"
-                    compute_type = "float16"
-                else:
-                    device = "cpu"
-                    compute_type = "int8"  # ✅ Use int8 for CPU
-            except ImportError:
-                device = "cpu"
-                compute_type = "int8"
-
             device = "cpu"
             compute_type = "int8"
             cls._instance = WhisperModel(MODEL_SIZE, device=device, compute_type=compute_type)
